@@ -69,7 +69,7 @@ function App() {
   if (!user && !showLogin) {
     return <LandingPage onLogin={handleLogin} onShowLogin={() => setShowLogin(true)} />;
   }
-  if (!user) return <Login onLogin={handleLogin} />;
+  if (!user) return <Login onLogin={handleLogin} onBack={() => setShowLogin(false)} />;
 
   const isDark = theme === 'dark';
 

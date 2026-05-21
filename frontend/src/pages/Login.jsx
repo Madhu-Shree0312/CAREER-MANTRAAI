@@ -68,7 +68,7 @@ function ParticleBackground() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 }
 
-function Login({ onLogin }) {
+function Login({ onLogin, onBack }) {
   const [activeTab, setActiveTab] = useState('user'); // 'user', 'admin', 'signup', 'recruiter'
   const [showOtherLogins, setShowOtherLogins] = useState(false);
   const [formData, setFormData] = useState({
@@ -172,6 +172,19 @@ function Login({ onLogin }) {
       </div>
 
       <div className="relative w-full max-w-md">
+        {/* Back to landing — fixed top-left */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="fixed top-5 left-5 z-50 flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors group bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-full backdrop-blur-sm"
+          >
+            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to home
+          </button>
+        )}
+
         {/* Logo & Title */}
         <div className="text-center mb-6">
           <img src="/logo.svg" alt="Career Mantra AI" className="w-24 h-24 rounded-2xl mb-4 shadow-2xl animate-float mx-auto" />

@@ -228,42 +228,190 @@ function LandingPage({ onLogin, onShowLogin }) {
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl" />
-        </div>
-        <div className="max-w-4xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 bg-white/8 border border-white/15 rounded-full px-4 py-1.5 text-xs text-white/70 mb-6">
-            <Zap className="w-3.5 h-3.5 text-yellow-400" /> AI-powered career platform for students
-          </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
-            Your Personal<br />
-            <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-teal-400 bg-clip-text text-transparent">
-              {typingText}<span className="animate-pulse">|</span>
-            </span>
-          </h1>
-          <p className="text-lg text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Career Mantra AI helps students land dream jobs with AI-powered resume analysis, personalized roadmaps, smart job matching, and 24/7 career mentorship.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center mb-12">
-            <button onClick={onShowLogin}
-              className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-full transition-all shadow-xl shadow-purple-900/40 text-sm">
-              🚀 Get started free
-            </button>
-            <button onClick={scrollToDemo}
-              className="flex items-center gap-2 px-7 py-3.5 border border-white/20 hover:border-white/40 text-white/80 hover:text-white rounded-full transition-all text-sm">
-              Try live demo <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-10 text-center">
-            {[['10K+','Students guided'],['95%','Resume improvement'],['4.8★','Average rating']].map(([n,l]) => (
-              <div key={l}>
-                <div className="text-2xl font-bold text-white">{n}</div>
-                <div className="text-xs text-white/50 mt-0.5">{l}</div>
+      {/* ── Hero: Design 1 (grid bg + glows) + Design 2 (split layout) ── */}
+      <section className="relative min-h-screen flex flex-col pt-20 overflow-hidden">
+
+        {/* Design 1 — dot grid background */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ backgroundImage:'radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px)', backgroundSize:'32px 32px' }} />
+
+        {/* Design 1 — radial glows */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-700/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-700/15 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-teal-700/10 rounded-full blur-[80px] pointer-events-none" />
+
+        {/* Design 2 — split layout */}
+        <div className="relative flex-1 flex items-center max-w-6xl mx-auto px-6 w-full py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
+
+            {/* LEFT — headline + CTA + trust avatars */}
+            <div>
+              <div className="inline-flex items-center gap-2 bg-white/8 border border-white/15 rounded-full px-4 py-1.5 text-xs text-white/70 mb-6">
+                <Zap className="w-3.5 h-3.5 text-yellow-400" /> AI-powered career platform for students
               </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-5">
+                Your Personal<br />
+                <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-teal-400 bg-clip-text text-transparent">
+                  {typingText}<span className="animate-pulse">|</span>
+                </span>
+              </h1>
+
+              <p className="text-base text-white/55 leading-relaxed mb-8 max-w-lg">
+                Career Mantra AI helps students land dream jobs with AI-powered resume analysis, personalized roadmaps, smart job matching, and 24/7 career mentorship.
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-wrap gap-3 mb-10">
+                <button onClick={onShowLogin}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-full transition-all shadow-xl shadow-purple-900/50 text-sm">
+                  🚀 Get started free
+                </button>
+                <button onClick={scrollToDemo}
+                  className="flex items-center gap-2 px-6 py-3 border border-white/20 hover:border-purple-500/50 hover:bg-purple-500/10 text-white/80 hover:text-white rounded-full transition-all text-sm">
+                  Try live demo <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Trust avatars + stats */}
+              <div className="flex items-center gap-5 flex-wrap">
+                <div className="flex items-center">
+                  {['AR','PS','KM','RV','SN'].map((init, i) => (
+                    <div key={init} className="w-9 h-9 rounded-full border-2 border-[#0a0e1a] flex items-center justify-center text-xs font-bold text-white"
+                      style={{ marginLeft: i === 0 ? 0 : -10, background: ['#7c3aed','#2563eb','#0891b2','#059669','#d97706'][i], zIndex: 5 - i }}>
+                      {init}
+                    </div>
+                  ))}
+                  <span className="ml-3 text-white/50 text-xs">10,000+ students</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[1,2,3,4,5].map(s => <Star key={s} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
+                  <span className="text-white/50 text-xs ml-1">4.8 rating</span>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT — phone mockup with animated chat + floating badges */}
+            <div className="relative flex justify-center items-center">
+
+              {/* Phone frame */}
+              <div className="relative w-[280px] h-[520px] bg-gradient-to-b from-gray-900 to-gray-950 rounded-[40px] border border-white/15 shadow-2xl shadow-purple-900/30 overflow-hidden flex flex-col">
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-b-2xl z-10" />
+                {/* Screen header */}
+                <div className="flex items-center gap-2 px-4 pt-8 pb-3 bg-gradient-to-r from-purple-900/60 to-blue-900/60 border-b border-white/10">
+                  <img src="/logo.svg" alt="AI" className="w-7 h-7 rounded-lg" />
+                  <div>
+                    <p className="text-white text-xs font-semibold">Career Mantra AI</p>
+                    <p className="text-green-400 text-[10px]">● Online</p>
+                  </div>
+                </div>
+                {/* Chat bubbles */}
+                <div className="flex-1 px-3 py-3 space-y-3 overflow-hidden">
+                  {/* AI bubble 1 */}
+                  <div className="flex gap-2 items-end">
+                    <img src="/logo.svg" alt="AI" className="w-6 h-6 rounded-full flex-shrink-0" />
+                    <div className="bg-white/10 border border-white/10 rounded-2xl rounded-bl-sm px-3 py-2 text-[11px] text-white/85 max-w-[80%] leading-relaxed">
+                      Hi! I'm your AI career mentor 👋 What's your dream role?
+                    </div>
+                  </div>
+                  {/* User bubble */}
+                  <div className="flex justify-end">
+                    <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl rounded-br-sm px-3 py-2 text-[11px] text-white max-w-[75%]">
+                      I want to become a Data Scientist
+                    </div>
+                  </div>
+                  {/* AI bubble 2 — animated typing then reveal */}
+                  <div className="flex gap-2 items-end">
+                    <img src="/logo.svg" alt="AI" className="w-6 h-6 rounded-full flex-shrink-0" />
+                    <div className="bg-white/10 border border-white/10 rounded-2xl rounded-bl-sm px-3 py-2 text-[11px] text-white/85 max-w-[80%] leading-relaxed">
+                      Great choice! Start with Python, statistics & ML basics. I'll build you a roadmap 🗺️
+                    </div>
+                  </div>
+                  {/* User bubble 2 */}
+                  <div className="flex justify-end">
+                    <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl rounded-br-sm px-3 py-2 text-[11px] text-white max-w-[75%]">
+                      Can you check my resume too?
+                    </div>
+                  </div>
+                  {/* Typing dots */}
+                  <div className="flex gap-2 items-end">
+                    <img src="/logo.svg" alt="AI" className="w-6 h-6 rounded-full flex-shrink-0" />
+                    <div className="bg-white/10 border border-white/10 rounded-2xl rounded-bl-sm px-3 py-2.5 flex gap-1">
+                      {[0,150,300].map(d => (
+                        <span key={d} className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay:`${d}ms` }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Input bar */}
+                <div className="px-3 py-3 border-t border-white/10">
+                  <div className="flex items-center gap-2 bg-white/8 border border-white/15 rounded-full px-3 py-2">
+                    <span className="text-[10px] text-white/30 flex-1">Ask anything...</span>
+                    <div className="w-5 h-5 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+                      <ArrowRight className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating badge — ATS Score */}
+              <div className="absolute -left-6 top-16 bg-gray-900/95 border border-purple-500/40 rounded-2xl px-4 py-3 shadow-xl shadow-purple-900/30 animate-[float_4s_ease-in-out_infinite]">
+                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-1">ATS Score</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-2xl font-extrabold text-white">88</span>
+                  <span className="text-white/40 text-xs mb-1">/100</span>
+                </div>
+                <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1.5">
+                  <div className="h-full w-[88%] bg-gradient-to-r from-purple-500 to-teal-500 rounded-full" />
+                </div>
+              </div>
+
+              {/* Floating badge — Roadmap */}
+              <div className="absolute -right-4 top-28 bg-gray-900/95 border border-blue-500/40 rounded-2xl px-4 py-3 shadow-xl shadow-blue-900/30 animate-[float_5s_ease-in-out_infinite_0.5s]">
+                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1.5">Roadmap</p>
+                <div className="flex items-center gap-1.5 text-[10px] text-white/70">
+                  <span className="w-2 h-2 rounded-full bg-green-400" />Learn Python
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-white/70 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" />Build Projects
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-white/40 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-white/20" />Apply & Win
+                </div>
+              </div>
+
+              {/* Floating badge — Job Match */}
+              <div className="absolute -left-4 bottom-24 bg-gray-900/95 border border-teal-500/40 rounded-2xl px-4 py-3 shadow-xl shadow-teal-900/30 animate-[float_3.5s_ease-in-out_infinite_1s]">
+                <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1">Job Match</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-extrabold text-white">94%</span>
+                  <span className="text-[10px] text-teal-400 bg-teal-500/15 border border-teal-500/30 px-1.5 py-0.5 rounded-full">⚡ Top fit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Design 1 — 5 floating mini feature cards at the bottom */}
+        <div className="relative w-full pb-10 px-6">
+          <div className="max-w-6xl mx-auto flex flex-wrap justify-center gap-3">
+            {[
+              { icon:'📄', label:'Resume Analyzer', sub:'ATS score in seconds', delay:'0s' },
+              { icon:'💬', label:'AI Career Chat', sub:'24/7 mentor', delay:'0.15s' },
+              { icon:'🗺️', label:'Roadmap Generator', sub:'Phase-by-phase path', delay:'0.3s' },
+              { icon:'💼', label:'Job Search', sub:'AI match % badges', delay:'0.45s' },
+              { icon:'🎯', label:'Goal Tracker', sub:'Stay on track', delay:'0.6s' },
+            ].map(({ icon, label, sub, delay }) => (
+              <button key={label} onClick={onShowLogin}
+                className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/40 rounded-2xl px-5 py-3 transition-all hover:-translate-y-1 cursor-pointer"
+                style={{ animation:`float 4s ease-in-out ${delay} infinite` }}>
+                <span className="text-xl group-hover:scale-110 transition-transform">{icon}</span>
+                <div className="text-left">
+                  <p className="text-white text-xs font-semibold">{label}</p>
+                  <p className="text-white/40 text-[10px]">{sub}</p>
+                </div>
+              </button>
             ))}
           </div>
         </div>
@@ -350,7 +498,10 @@ function LandingPage({ onLogin, onShowLogin }) {
       {/* ── Footer ── */}
       <footer className="border-t border-white/10 py-6 px-6">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <p className="text-white/40 text-sm">© 2025 Career Mantra AI. Built with ❤️ for Indian students.</p>
+          <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="Career Mantra AI" className="w-6 h-6 rounded-lg" />
+            <span className="text-white/50 text-sm font-semibold">Career Mantra AI</span>
+          </div>
           <div className="flex gap-6 text-sm text-white/40">
             {['Features','Demo','Reviews'].map(l => (
               <button key={l} onClick={l === 'Demo' ? scrollToDemo : undefined} className="hover:text-white/70 transition-colors">{l}</button>
