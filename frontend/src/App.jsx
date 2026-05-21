@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Login from './pages/Login';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import RecruiterDashboard from './pages/RecruiterDashboard';
@@ -17,6 +18,7 @@ function App() {
   const [activeSession, setActiveSession] = useState('new');
   const [sessions, setSessions] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showLogin, setShowLogin] = useState(false); // landing → login transition
   const { theme, toggle } = useTheme();
 
   useEffect(() => {
@@ -37,6 +39,7 @@ function App() {
     localStorage.removeItem('user');
     localStorage.removeItem('rememberMe');
     setUser(null);
+    setShowLogin(false); // go back to landing page
     setCurrentPage('dashboard');
   };
 
@@ -62,6 +65,10 @@ function App() {
     setIsSidebarOpen(false);
   };
 
+  // Show landing page first, then login, then app
+  if (!user && !showLogin) {
+    return <LandingPage onLogin={handleLogin} onShowLogin={() => setShowLogin(true)} />;
+  }
   if (!user) return <Login onLogin={handleLogin} />;
 
   const isDark = theme === 'dark';
