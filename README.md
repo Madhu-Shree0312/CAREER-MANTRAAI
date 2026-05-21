@@ -333,7 +333,7 @@ Need help? Check out:
 
 ## 🌟 Show Your Support
 
-Give a ⭐️ if this project helped you!
+Give a ⭐️ if this project helped yo!
 
 ---
 
@@ -344,5 +344,6 @@ Give a ⭐️ if this project helped you!
 [Report Bug](https://github.com/yourusername/career-mantra-ai/issues) • [Request Feature](https://github.com/yourusername/career-mantra-ai/issues)
 
 </div>
-#   c a r e e r - m a n t r a - A I -  
+#   c a r e e r - m a n t r a - A I - 
+ 
  

@@ -8,7 +8,8 @@ import ChatInterface from './components/ChatInterface';
 import ResumeAnalyzer from './components/ResumeAnalyzer';
 import RoadmapGenerator from './components/RoadmapGenerator';
 import Sidebar from './components/Sidebar';
-import { MessageSquare, FileText, Map, Menu, X } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
+import { useTheme } from './context/ThemeContext';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -16,6 +17,7 @@ function App() {
   const [activeSession, setActiveSession] = useState('new');
   const [sessions, setSessions] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -43,16 +45,16 @@ function App() {
       id: Date.now().toString(),
       title: 'New Conversation',
       timestamp: new Date(),
-      messages: []
+      messages: [],
     };
     setSessions([newSession, ...sessions]);
     setActiveSession(newSession.id);
   };
 
   const updateSessionTitle = (sessionId, firstMessage) => {
-    setSessions(
-      sessions.map((s) => (s.id === sessionId ? { ...s, title: firstMessage.slice(0, 50) } : s))
-    );
+    setSessions(sessions.map((s) =>
+      s.id === sessionId ? { ...s, title: firstMessage.slice(0, 50) } : s
+    ));
   };
 
   const navigateToTool = (toolId) => {
@@ -60,25 +62,49 @@ function App() {
     setIsSidebarOpen(false);
   };
 
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
+  if (!user) return <Login onLogin={handleLogin} />;
+
+  const isDark = theme === 'dark';
 
   return (
-    <div className="flex h-screen bg-[radial-gradient(circle_at_center,_#0a3a70_0%,_#081a30_50%,_#000000_100%)] overflow-hidden">
-      {/* Mobile Menu Button */}
+    <div className={`flex h-screen overflow-hidden ${
+      isDark
+        ? 'bg-[radial-gradient(circle_at_center,_#0a3a70_0%,_#081a30_50%,_#000000_100%)]'
+        : 'bg-gray-100'
+    }`}>
+
+      {/* Mobile hamburger */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 text-white"
+        className={`lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg border backdrop-blur-lg ${
+          isDark
+            ? 'bg-white/10 border-white/20 text-white'
+            : 'bg-white border-gray-200 text-gray-700 shadow-sm'
+        }`}
+        aria-label="Toggle menu"
       >
-        {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+
+      {/* Theme toggle — always visible top-right */}
+      <button
+        onClick={toggle}
+        className={`fixed top-4 right-4 z-50 p-2 rounded-lg border backdrop-blur-lg transition-all ${
+          isDark
+            ? 'bg-white/10 border-white/20 text-yellow-300 hover:bg-white/20'
+            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm'
+        }`}
+        aria-label="Toggle theme"
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:relative inset-y-0 left-0 z-40 transform ${
+        className={`fixed lg:relative inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+        } lg:translate-x-0`}
       >
         <Sidebar
           sessions={sessions}
@@ -92,28 +118,36 @@ function App() {
         />
       </div>
 
-      {/* Overlay for mobile */}
+      {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsSidebarOpen(false)}
-        ></div>
+        />
       )}
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {currentPage !== 'dashboard' && (
-          <header className="bg-white/10 backdrop-blur-lg border-b border-white/20 px-4 lg:px-6 py-4 shadow-lg">
-            <div className="flex items-center gap-3">
-              <img 
-                src="/logo.svg" 
-                alt="Career Mantra AI" 
-                className="w-10 h-10 rounded-lg cursor-pointer"
+          <header className={`border-b px-4 lg:px-6 py-3 shadow-sm flex items-center justify-between backdrop-blur-lg ${
+            isDark
+              ? 'bg-white/10 border-white/20'
+              : 'bg-white border-gray-200'
+          }`}>
+            <div className="flex items-center gap-3 pl-10 lg:pl-0">
+              <img
+                src="/logo.svg"
+                alt="Career Mantra AI"
+                className="w-9 h-9 rounded-lg cursor-pointer"
                 onClick={() => setCurrentPage('dashboard')}
               />
               <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-white">Career Mantra AI</h1>
-                <p className="text-xs lg:text-sm text-blue-200">Your intelligent career companion</p>
+                <h1 className={`text-lg lg:text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Career Mantra AI
+                </h1>
+                <p className={`text-xs ${isDark ? 'text-blue-200' : 'text-gray-500'}`}>
+                  Your intelligent career companion
+                </p>
               </div>
             </div>
           </header>

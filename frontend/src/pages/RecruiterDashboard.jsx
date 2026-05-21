@@ -3,27 +3,28 @@ import {
   Plus, 
   Briefcase, 
   Users, 
-  Eye, 
   Edit, 
   Trash2, 
   Upload,
   Download,
   Mail,
   Phone,
-  Calendar,
   MapPin,
-  DollarSign
+  DollarSign,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import API_BASE_URL from '../config/api';
 
 function RecruiterDashboard() {
-  const [activeTab, setActiveTab] = useState('jobs'); // 'jobs', 'applications', 'post-job'
+  const [activeTab, setActiveTab] = useState('jobs');
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [generatingField, setGeneratingField] = useState(null); // 'description' | 'requirements'
 
   const [jobForm, setJobForm] = useState({
     title: '',
@@ -143,8 +144,6 @@ function RecruiterDashboard() {
   const downloadResume = (applicationId, fileName) => {
     const token = localStorage.getItem('token');
     const url = `${API_BASE_URL}/api/recruiter/applications/${applicationId}/resume`;
-    
-    // Create a temporary link to download the file
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
@@ -152,6 +151,27 @@ function RecruiterDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const generateWithAI = async (field) => {
+    if (!jobForm.title.trim()) {
+      alert('Please enter a Job Title first so AI knows what to generate.');
+      return;
+    }
+    setGeneratingField(field);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        `${API_BASE_URL}/api/recruiter/generate-job-content`,
+        { title: jobForm.title, company: jobForm.company, location: jobForm.location, type: jobForm.type, field },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setJobForm(f => ({ ...f, [field]: res.data.content }));
+    } catch (err) {
+      alert('AI generation failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setGeneratingField(null);
+    }
   };
 
   return (
@@ -454,25 +474,51 @@ function RecruiterDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-white/90 text-sm font-medium mb-2">Job Description</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-white/90 text-sm font-medium">Job Description</label>
+                    <button
+                      type="button"
+                      onClick={() => generateWithAI('description')}
+                      disabled={generatingField === 'description'}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-purple-600/20 hover:bg-purple-600/35 border border-purple-500/40 text-purple-300 hover:text-purple-200 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                    >
+                      {generatingField === 'description'
+                        ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</>
+                        : <><Sparkles className="w-3 h-3" /> Generate with AI</>
+                      }
+                    </button>
+                  </div>
                   <textarea
                     value={jobForm.description}
                     onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })}
                     rows={4}
                     className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    placeholder="Describe the role, responsibilities, and what you're looking for..."
+                    placeholder="Describe the role, responsibilities, and what you're looking for... or click Generate with AI ✨"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white/90 text-sm font-medium mb-2">Requirements</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-white/90 text-sm font-medium">Requirements</label>
+                    <button
+                      type="button"
+                      onClick={() => generateWithAI('requirements')}
+                      disabled={generatingField === 'requirements'}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-purple-600/20 hover:bg-purple-600/35 border border-purple-500/40 text-purple-300 hover:text-purple-200 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                    >
+                      {generatingField === 'requirements'
+                        ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</>
+                        : <><Sparkles className="w-3 h-3" /> Generate with AI</>
+                      }
+                    </button>
+                  </div>
                   <textarea
                     value={jobForm.requirements}
                     onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })}
                     rows={3}
                     className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    placeholder="List required skills, experience, qualifications..."
+                    placeholder="List required skills, experience, qualifications... or click Generate with AI ✨"
                     required
                   />
                 </div>

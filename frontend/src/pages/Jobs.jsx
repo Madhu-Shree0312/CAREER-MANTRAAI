@@ -1,548 +1,459 @@
-import { useState, useEffect } from 'react';
-import { 
-  Search, 
-  MapPin, 
-  Briefcase, 
-  DollarSign, 
-  Clock, 
-  Building, 
-  ExternalLink,
-  Filter,
-  Star,
-  BookmarkPlus,
-  Bookmark
+import { useState, useEffect, useMemo } from 'react';
+import {
+  Search, MapPin, Briefcase, DollarSign, Clock, Building,
+  ExternalLink, Filter, Star, Bookmark, BookmarkPlus, X,
+  ChevronDown, ChevronUp, Zap, CheckCircle, Wifi, WifiOff,
+  Monitor, Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import API_BASE_URL from '../config/api';
 import JobApplicationForm from '../components/JobApplicationForm';
 
+// ── Mock data ────────────────────────────────────────────────────────────────
+const MOCK_JOBS = [
+  {
+    id: 1, title: 'Frontend Developer', company: 'TechCorp Inc.', location: 'San Francisco, CA',
+    type: 'Full-time', workMode: 'Hybrid', experience: 'Mid-level',
+    salary: '$80,000 – $120,000',
+    description: 'Build user-facing features using React, TypeScript, and modern web technologies for our flagship SaaS product.',
+    requirements: ['3+ years React', 'TypeScript', 'CSS/SCSS', 'REST APIs'],
+    posted: '2 days ago', logo: '🏢', featured: true, matchScore: 87,
+    applyUrl: 'https://techcorp.com/careers/frontend-developer',
+    skills: ['React', 'TypeScript', 'CSS', 'Node.js'],
+  },
+  {
+    id: 2, title: 'Data Scientist', company: 'DataFlow Analytics', location: 'Remote',
+    type: 'Full-time', workMode: 'Remote', experience: 'Senior',
+    salary: '$90,000 – $140,000',
+    description: 'Build predictive models and extract insights from large datasets using Python, SQL, and ML frameworks.',
+    requirements: ['Python/R', 'Machine Learning', 'SQL', 'TensorFlow/PyTorch'],
+    posted: '1 day ago', logo: '📊', featured: false, matchScore: 62,
+    applyUrl: 'https://dataflow.com/jobs/data-scientist',
+    skills: ['Python', 'SQL', 'ML', 'Statistics'],
+  },
+  {
+    id: 3, title: 'UX Designer', company: 'Design Studio Pro', location: 'New York, NY',
+    type: 'Contract', workMode: 'On-site', experience: 'Mid-level',
+    salary: '$60 – $80/hr',
+    description: 'Design intuitive user experiences for mobile and web applications. Own the full design process from research to handoff.',
+    requirements: ['Figma/Sketch', 'User research', 'Prototyping', 'Portfolio required'],
+    posted: '3 days ago', logo: '🎨', featured: false, matchScore: 74,
+    applyUrl: 'https://designstudiopro.com/careers/ux-designer',
+    skills: ['Figma', 'UX Research', 'Prototyping'],
+  },
+  {
+    id: 4, title: 'DevOps Engineer', company: 'CloudTech Solutions', location: 'Austin, TX',
+    type: 'Full-time', workMode: 'Remote', experience: 'Senior',
+    salary: '$95,000 – $130,000',
+    description: 'Manage cloud infrastructure, CI/CD pipelines, and ensure system reliability at scale.',
+    requirements: ['AWS/Azure', 'Docker/Kubernetes', 'CI/CD', 'Terraform'],
+    posted: '1 week ago', logo: '☁️', featured: true, matchScore: 55,
+    applyUrl: 'https://cloudtech.com/careers/devops-engineer',
+    skills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD'],
+  },
+  {
+    id: 5, title: 'Product Manager', company: 'Innovation Labs', location: 'Seattle, WA',
+    type: 'Full-time', workMode: 'Hybrid', experience: 'Senior',
+    salary: '$110,000 – $150,000',
+    description: 'Lead product strategy for our cutting-edge SaaS platform. Work with cross-functional teams to ship great products.',
+    requirements: ['5+ years PM', 'Agile', 'Technical background', 'Data-driven'],
+    posted: '4 days ago', logo: '🚀', featured: false, matchScore: 41,
+    applyUrl: 'https://innovationlabs.com/jobs/product-manager',
+    skills: ['Product Strategy', 'Agile', 'Roadmapping'],
+  },
+  {
+    id: 6, title: 'Backend Developer', company: 'ServerSide Systems', location: 'Remote',
+    type: 'Part-time', workMode: 'Remote', experience: 'Entry-level',
+    salary: '$50,000 – $70,000',
+    description: 'Build and maintain scalable backend services using Node.js, Python, and cloud technologies.',
+    requirements: ['Node.js/Python', 'Database design', 'API development', 'Git'],
+    posted: '5 days ago', logo: '⚙️', featured: false, matchScore: 79,
+    applyUrl: 'https://serverside.com/careers/backend-developer',
+    skills: ['Node.js', 'Python', 'PostgreSQL', 'REST'],
+  },
+];
+
+// ── Match badge ──────────────────────────────────────────────────────────────
+function MatchBadge({ score }) {
+  const color = score >= 80 ? 'bg-green-500/20 border-green-500/50 text-green-300'
+    : score >= 60 ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+    : 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300';
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}>
+      <Zap className="w-3 h-3" />{score}% Match
+    </span>
+  );
+}
+
+// ── Work mode icon ───────────────────────────────────────────────────────────
+function WorkModeChip({ mode }) {
+  const map = {
+    Remote:  { icon: Wifi,    cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+    Hybrid:  { icon: Monitor, cls: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+    'On-site':{ icon: WifiOff, cls: 'bg-gray-500/15 text-gray-300 border-gray-500/30' },
+  };
+  const { icon: Icon, cls } = map[mode] ?? map['On-site'];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${cls}`}>
+      <Icon className="w-3 h-3" />{mode}
+    </span>
+  );
+}
+
+// ── Applied chip ─────────────────────────────────────────────────────────────
+function AppliedChip() {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/20 border border-green-500/40 text-green-300">
+      <CheckCircle className="w-3 h-3" /> Applied
+    </span>
+  );
+}
+
+// ── Job card ─────────────────────────────────────────────────────────────────
+function JobCard({ job, saved, applied, onSave, onApply, onGetTips, onApplyNow }) {
+  const [expanded, setExpanded] = useState(false);
+  const [tipsLoading, setTipsLoading] = useState(false);
+  const [tips, setTips] = useState('');
+
+  const handleTips = async () => {
+    setTipsLoading(true);
+    setExpanded(true);
+    const result = await onGetTips(job.title);
+    setTips(result);
+    setTipsLoading(false);
+  };
+
+  return (
+    <div className={`bg-white/10 backdrop-blur-lg rounded-xl border transition-all duration-200 overflow-hidden
+      ${expanded ? 'border-white/30' : 'border-white/15 hover:border-white/30'}`}>
+
+      {/* Compact header */}
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Logo */}
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-xl flex-shrink-0">
+            {job.logo}
+          </div>
+
+          {/* Title block */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-white font-semibold text-sm">{job.title}</h3>
+              {job.featured && (
+                <span className="inline-flex items-center gap-0.5 bg-yellow-500/20 text-yellow-200 px-1.5 py-0.5 rounded-full text-xs border border-yellow-500/40">
+                  <Star className="w-2.5 h-2.5" /> Featured
+                </span>
+              )}
+              <MatchBadge score={job.matchScore} />
+              {applied && <AppliedChip />}
+            </div>
+            <div className="flex items-center gap-3 text-white/50 text-xs mt-1 flex-wrap">
+              <span className="flex items-center gap-1"><Building className="w-3 h-3" />{job.company}</span>
+              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{job.posted}</span>
+            </div>
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => onSave(job.id)} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 transition-colors">
+              {saved ? <Bookmark className="w-4 h-4 text-yellow-400 fill-current" /> : <BookmarkPlus className="w-4 h-4 text-white/50" />}
+            </button>
+            <button onClick={() => setExpanded(v => !v)} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 transition-colors text-white/50">
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Chips row */}
+        <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/60">{job.type}</span>
+          <WorkModeChip mode={job.workMode} />
+          <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/60">{job.experience}</span>
+          <span className="flex items-center gap-1 text-xs text-green-300 font-medium ml-auto">
+            <DollarSign className="w-3 h-3" />{job.salary}
+          </span>
+        </div>
+
+        {/* Footer buttons — always visible */}
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            onClick={handleTips}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs font-medium rounded-lg transition-all"
+          >
+            <Zap className="w-3 h-3" /> AI Tips
+          </button>
+          <button
+            onClick={() => onApplyNow(job)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-medium rounded-lg transition-all"
+          >
+            Apply Now <ExternalLink className="w-3 h-3" />
+          </button>
+          <button onClick={() => setExpanded(v => !v)} className="ml-auto text-xs text-white/40 hover:text-white/70 transition-colors">
+            {expanded ? 'Less' : 'View Details'}
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded drawer */}
+      {expanded && (
+        <div className="border-t border-white/10 px-4 py-4 space-y-3 bg-white/5">
+          <p className="text-white/70 text-sm leading-relaxed">{job.description}</p>
+          <div>
+            <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Requirements</p>
+            <div className="flex flex-wrap gap-1.5">
+              {job.requirements.map((r, i) => (
+                <span key={i} className="text-xs px-2 py-1 bg-white/10 border border-white/15 rounded-lg text-white/70">{r}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Tips section */}
+          {(tipsLoading || tips) && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+              <p className="text-green-300 text-xs font-semibold mb-1.5 flex items-center gap-1">
+                <Zap className="w-3 h-3" /> AI Application Tips
+              </p>
+              {tipsLoading
+                ? <div className="flex items-center gap-2 text-white/50 text-xs"><Loader2 className="w-3 h-3 animate-spin" /> Generating tips...</div>
+                : <p className="text-white/70 text-xs whitespace-pre-wrap leading-relaxed">{tips}</p>
+              }
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 function Jobs() {
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'saved'
   const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [jobTypeFilter, setJobTypeFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [modeFilter, setModeFilter] = useState('');
+  const [expFilter, setExpFilter] = useState('');
   const [savedJobs, setSavedJobs] = useState(new Set());
-  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [appliedJobs, setAppliedJobs] = useState(new Set());
   const [selectedJob, setSelectedJob] = useState(null);
+  const [showApplyModal, setShowApplyModal] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
 
-  // Mock job data - in production, this would come from a job API
-  const mockJobs = [
-    {
-      id: 1,
-      title: 'Frontend Developer',
-      company: 'TechCorp Inc.',
-      location: 'San Francisco, CA',
-      type: 'Full-time',
-      salary: '$80,000 - $120,000',
-      description: 'We are looking for a skilled Frontend Developer to join our team. You will be responsible for building user-facing features using React, TypeScript, and modern web technologies.',
-      requirements: ['3+ years React experience', 'TypeScript proficiency', 'CSS/SCSS skills'],
-      posted: '2 days ago',
-      logo: '🏢',
-      remote: false,
-      featured: true,
-      applyUrl: 'https://techcorp.com/careers/frontend-developer'
-    },
-    {
-      id: 2,
-      title: 'Data Scientist',
-      company: 'DataFlow Analytics',
-      location: 'Remote',
-      type: 'Full-time',
-      salary: '$90,000 - $140,000',
-      description: 'Join our data science team to build predictive models and extract insights from large datasets using Python, SQL, and machine learning frameworks.',
-      requirements: ['Python/R expertise', 'Machine Learning', 'SQL proficiency'],
-      posted: '1 day ago',
-      logo: '📊',
-      remote: true,
-      featured: false,
-      applyUrl: 'https://dataflow.com/jobs/data-scientist'
-    },
-    {
-      id: 3,
-      title: 'UX Designer',
-      company: 'Design Studio Pro',
-      location: 'New York, NY',
-      type: 'Contract',
-      salary: '$60 - $80/hour',
-      description: 'We need a creative UX Designer to help design intuitive user experiences for our mobile and web applications.',
-      requirements: ['Figma/Sketch expertise', 'User research skills', 'Portfolio required'],
-      posted: '3 days ago',
-      logo: '🎨',
-      remote: false,
-      featured: false,
-      applyUrl: 'https://designstudiopro.com/careers/ux-designer'
-    },
-    {
-      id: 4,
-      title: 'DevOps Engineer',
-      company: 'CloudTech Solutions',
-      location: 'Austin, TX',
-      type: 'Full-time',
-      salary: '$95,000 - $130,000',
-      description: 'Looking for a DevOps Engineer to manage our cloud infrastructure, CI/CD pipelines, and ensure system reliability.',
-      requirements: ['AWS/Azure experience', 'Docker/Kubernetes', 'CI/CD pipelines'],
-      posted: '1 week ago',
-      logo: '☁️',
-      remote: true,
-      featured: true,
-      applyUrl: 'https://cloudtech.com/careers/devops-engineer'
-    },
-    {
-      id: 5,
-      title: 'Product Manager',
-      company: 'Innovation Labs',
-      location: 'Seattle, WA',
-      type: 'Full-time',
-      salary: '$110,000 - $150,000',
-      description: 'Lead product strategy and development for our cutting-edge SaaS platform. Work with cross-functional teams to deliver exceptional user experiences.',
-      requirements: ['5+ years PM experience', 'Agile methodology', 'Technical background'],
-      posted: '4 days ago',
-      logo: '🚀',
-      remote: false,
-      featured: false,
-      applyUrl: 'https://innovationlabs.com/jobs/product-manager'
-    },
-    {
-      id: 6,
-      title: 'Backend Developer',
-      company: 'ServerSide Systems',
-      location: 'Remote',
-      type: 'Part-time',
-      salary: '$50,000 - $70,000',
-      description: 'Build and maintain scalable backend services using Node.js, Python, and cloud technologies.',
-      requirements: ['Node.js/Python', 'Database design', 'API development'],
-      posted: '5 days ago',
-      logo: '⚙️',
-      remote: true,
-      featured: false,
-      applyUrl: 'https://serverside.com/careers/backend-developer'
-    }
-  ];
-
   useEffect(() => {
-    // Fetch jobs from API
-    const fetchJobs = async () => {
+    const load = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/jobs`);
-        const apiJobs = response.data.jobs || [];
-        
-        // Combine API jobs with mock jobs for demo
-        const allJobs = [...apiJobs, ...mockJobs];
-        setJobs(allJobs);
-        setFilteredJobs(allJobs);
-      } catch (error) {
-        console.error('Failed to fetch jobs:', error);
-        // Fallback to mock data
-        setJobs(mockJobs);
-        setFilteredJobs(mockJobs);
+        const res = await axios.get(`${API_BASE_URL}/api/jobs`);
+        setJobs([...(res.data.jobs || []), ...MOCK_JOBS]);
+      } catch {
+        setJobs(MOCK_JOBS);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchJobs();
+    load();
   }, []);
 
-  useEffect(() => {
-    let filtered = jobs;
+  const filtered = useMemo(() => {
+    let list = activeTab === 'saved' ? jobs.filter(j => savedJobs.has(j.id)) : jobs;
+    if (searchTerm) list = list.filter(j =>
+      j.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      j.company.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    if (typeFilter) list = list.filter(j => j.type === typeFilter);
+    if (modeFilter) list = list.filter(j => j.workMode === modeFilter);
+    if (expFilter)  list = list.filter(j => j.experience === expFilter);
+    return list;
+  }, [jobs, searchTerm, typeFilter, modeFilter, expFilter, savedJobs, activeTab]);
 
-    if (searchTerm) {
-      filtered = filtered.filter(job => 
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (locationFilter) {
-      filtered = filtered.filter(job => 
-        job.location.toLowerCase().includes(locationFilter.toLowerCase())
-      );
-    }
-
-    if (jobTypeFilter) {
-      filtered = filtered.filter(job => job.type === jobTypeFilter);
-    }
-
-    setFilteredJobs(filtered);
-  }, [searchTerm, locationFilter, jobTypeFilter, jobs]);
-
-  const toggleSaveJob = (jobId) => {
-    const newSavedJobs = new Set(savedJobs);
-    if (newSavedJobs.has(jobId)) {
-      newSavedJobs.delete(jobId);
-    } else {
-      newSavedJobs.add(jobId);
-    }
-    setSavedJobs(newSavedJobs);
-  };
+  const toggleSave = (id) => setSavedJobs(prev => {
+    const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s;
+  });
 
   const getApplicationTips = async (jobTitle) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/api/chat`, {
-        messages: [{
-          role: 'user',
-          content: `Give me 3 specific tips for applying to a ${jobTitle} position. Keep it concise and actionable.`
-        }]
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await axios.post(`${API_BASE_URL}/api/chat`, {
+        messages: [{ role: 'user', content: `Give me 3 concise, actionable tips for applying to a ${jobTitle} position.` }]
       });
-      
-      alert(`AI Tips for ${jobTitle}:\n\n${response.data.message}`);
-    } catch (error) {
-      console.error('Failed to get application tips:', error);
-      alert('Failed to get AI tips. Please try again.');
+      return res.data.message || 'No tips available.';
+    } catch {
+      return 'Could not load tips — make sure the backend is running.';
     }
   };
 
-  const handleApplyNow = (job) => {
-    setSelectedJob(job);
-    setShowApplyModal(true);
-  };
+  const handleApplyNow = (job) => { setSelectedJob(job); setShowApplyModal(true); };
 
   const handleApplyConfirm = (method) => {
     if (!selectedJob) return;
-
     setShowApplyModal(false);
-    
-    switch (method) {
-      case 'form':
-        setShowApplicationForm(true);
-        break;
-      case 'direct':
-        if (selectedJob.applyUrl) {
-          window.open(selectedJob.applyUrl, '_blank');
-        } else {
-          const searchQuery = encodeURIComponent(`${selectedJob.title} ${selectedJob.company}`);
-          window.open(`https://www.google.com/search?q=${searchQuery}+careers`, '_blank');
-        }
-        break;
-      case 'linkedin':
-        const linkedinQuery = encodeURIComponent(`${selectedJob.title} ${selectedJob.company}`);
-        window.open(`https://www.linkedin.com/jobs/search/?keywords=${linkedinQuery}`, '_blank');
-        break;
-      case 'indeed':
-        const indeedQuery = encodeURIComponent(`${selectedJob.title} ${selectedJob.company}`);
-        window.open(`https://www.indeed.com/jobs?q=${indeedQuery}`, '_blank');
-        break;
-      case 'save':
-        toggleSaveJob(selectedJob.id);
-        alert(`${selectedJob.title} has been saved to your bookmarks! 📌`);
-        return;
-    }
-    
-    if (method !== 'form') {
-      // Track application
-      console.log(`User applied for: ${selectedJob.title} at ${selectedJob.company} via ${method}`);
-      
-      // Show success message
-      setTimeout(() => {
-        alert(`Application initiated for ${selectedJob.title}!\n\nGood luck with your application! 🍀`);
-      }, 500);
-    }
+    if (method === 'form') { setShowApplicationForm(true); return; }
+    if (method === 'save') { toggleSave(selectedJob.id); return; }
+    const q = encodeURIComponent(`${selectedJob.title} ${selectedJob.company}`);
+    const urls = {
+      direct: selectedJob.applyUrl,
+      linkedin: `https://www.linkedin.com/jobs/search/?keywords=${q}`,
+      indeed: `https://www.indeed.com/jobs?q=${q}`,
+    };
+    window.open(urls[method] || selectedJob.applyUrl, '_blank');
+    setAppliedJobs(prev => new Set([...prev, selectedJob.id]));
   };
 
-  const handleApplicationSuccess = () => {
-    // Refresh jobs or update application count
-    console.log('Application submitted successfully');
-  };
+  const selectCls = 'pl-9 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none cursor-pointer';
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-        <div className="text-white text-xl">Loading job opportunities...</div>
+        <div className="flex items-center gap-3 text-white/70"><Loader2 className="w-5 h-5 animate-spin" /> Loading jobs...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-4 lg:p-6">
+      <div className="max-w-4xl mx-auto space-y-5">
+
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Briefcase className="w-8 h-8 text-green-400" />
-            Job Search & Listings
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Briefcase className="w-6 h-6 text-green-400" /> Job Search & Listings
           </h1>
-          <p className="text-blue-200">Discover your next career opportunity with AI-powered insights</p>
+          <p className="text-blue-200/70 text-sm mt-0.5">AI-powered match scores based on your profile</p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
-              <input
-                type="text"
-                placeholder="Search jobs, companies..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Location Filter */}
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
-              <input
-                type="text"
-                placeholder="Location..."
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Job Type Filter */}
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
-              <select
-                value={jobTypeFilter}
-                onChange={(e) => setJobTypeFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none"
-              >
-                <option value="">All Types</option>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-              </select>
-            </div>
-
-            {/* Results Count */}
-            <div className="flex items-center justify-center bg-green-500/20 border border-green-500/50 rounded-lg px-4 py-2.5">
-              <span className="text-green-200 text-sm font-medium">
-                {filteredJobs.length} jobs found
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Job Listings */}
-        <div className="space-y-6">
-          {filteredJobs.map((job) => (
-            <div key={job.id} className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 overflow-hidden hover:border-white/40 transition-all">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center text-2xl">
-                      {job.logo}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold text-white">{job.title}</h3>
-                        {job.featured && (
-                          <span className="inline-flex items-center gap-1 bg-yellow-500/20 text-yellow-200 px-2 py-1 rounded-full text-xs border border-yellow-500/50">
-                            <Star className="w-3 h-3" />
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-blue-200 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Building className="w-4 h-4" />
-                          {job.company}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {job.location}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {job.posted}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => toggleSaveJob(job.id)}
-                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                  >
-                    {savedJobs.has(job.id) ? (
-                      <Bookmark className="w-5 h-5 text-yellow-400 fill-current" />
-                    ) : (
-                      <BookmarkPlus className="w-5 h-5 text-white/70" />
-                    )}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2">
-                    <p className="text-white/80 mb-4 leading-relaxed">{job.description}</p>
-                    
-                    <div className="mb-4">
-                      <h4 className="text-white font-medium mb-2">Requirements:</h4>
-                      <ul className="space-y-1">
-                        {job.requirements.map((req, index) => (
-                          <li key={index} className="flex items-center gap-2 text-white/70 text-sm">
-                            <div className="w-1 h-1 bg-green-400 rounded-full"></div>
-                            {req}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                      <div className="flex items-center gap-2 mb-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span className="text-white font-medium text-sm">Salary</span>
-                      </div>
-                      <p className="text-green-200 font-semibold">{job.salary}</p>
-                    </div>
-
-                    <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Briefcase className="w-4 h-4 text-blue-400" />
-                        <span className="text-white font-medium text-sm">Type</span>
-                      </div>
-                      <p className="text-blue-200">{job.type}</p>
-                      {job.remote && (
-                        <span className="inline-block mt-1 bg-blue-500/20 text-blue-200 px-2 py-1 rounded-full text-xs border border-blue-500/50">
-                          Remote OK
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => getApplicationTips(job.title)}
-                        className="w-full py-2 px-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium text-sm hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg"
-                      >
-                        Get AI Tips
-                      </button>
-                      <button
-                        onClick={() => handleApplyNow(job)}
-                        className="w-full py-2 px-4 bg-white/10 border border-white/20 text-white rounded-lg font-medium text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
-                      >
-                        Apply Now
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Tabs */}
+        <div className="flex gap-2">
+          {[['all','All Jobs'],['saved','Saved Jobs']].map(([t, label]) => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === t
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md'
+                  : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/15'
+              }`}
+            >
+              {label}
+              {t === 'saved' && savedJobs.size > 0 && (
+                <span className="ml-1.5 bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{savedJobs.size}</span>
+              )}
+            </button>
           ))}
         </div>
 
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <Briefcase className="w-16 h-16 text-white/30 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No jobs found</h3>
-            <p className="text-white/60">Try adjusting your search criteria</p>
+        {/* Search + filters */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-4 space-y-3">
+          {/* Search row */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search jobs or companies..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          {/* Filter row */}
+          <div className="flex flex-wrap gap-2">
+            {/* Job type */}
+            <div className="relative">
+              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+              <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className={selectCls}>
+                <option value="">All Types</option>
+                {['Full-time','Part-time','Contract'].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            {/* Work mode */}
+            <div className="relative">
+              <Wifi className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+              <select value={modeFilter} onChange={e => setModeFilter(e.target.value)} className={selectCls}>
+                <option value="">All Modes</option>
+                {['Remote','Hybrid','On-site'].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            {/* Experience */}
+            <div className="relative">
+              <Briefcase className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+              <select value={expFilter} onChange={e => setExpFilter(e.target.value)} className={selectCls}>
+                <option value="">All Levels</option>
+                {['Entry-level','Mid-level','Senior'].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            {/* Clear */}
+            {(typeFilter || modeFilter || expFilter || searchTerm) && (
+              <button onClick={() => { setTypeFilter(''); setModeFilter(''); setExpFilter(''); setSearchTerm(''); }}
+                className="flex items-center gap-1 text-xs text-white/40 hover:text-white/70 px-2 transition-colors">
+                <X className="w-3 h-3" /> Clear
+              </button>
+            )}
+          </div>
+
+          {/* Results count — below search, not a button */}
+          <p className="text-white/40 text-xs">
+            Showing {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+            {searchTerm ? ` for "${searchTerm}"` : ''}
+          </p>
+        </div>
+
+        {/* Job cards */}
+        <div className="space-y-3">
+          {filtered.map(job => (
+            <JobCard
+              key={job.id}
+              job={job}
+              saved={savedJobs.has(job.id)}
+              applied={appliedJobs.has(job.id)}
+              onSave={toggleSave}
+              onApplyNow={handleApplyNow}
+              onGetTips={getApplicationTips}
+            />
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="text-center py-16">
+            <Briefcase className="w-12 h-12 text-white/20 mx-auto mb-3" />
+            <p className="text-white/50 text-sm">
+              {activeTab === 'saved' ? 'No saved jobs yet — bookmark some to track them here.' : 'No jobs match your filters.'}
+            </p>
           </div>
         )}
       </div>
 
-      {/* Apply Modal */}
+      {/* Apply modal */}
       {showApplyModal && selectedJob && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 rounded-xl border border-white/20 p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-green-400" />
-              Apply for Position
-            </h3>
-            
-            <div className="mb-6">
-              <h4 className="text-lg font-semibold text-white">{selectedJob.title}</h4>
-              <p className="text-blue-200">{selectedJob.company}</p>
-              <div className="flex items-center gap-4 text-white/70 text-sm mt-2">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {selectedJob.location}
-                </span>
-                <span className="flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" />
-                  {selectedJob.salary}
-                </span>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 rounded-xl border border-white/20 p-5 max-w-sm w-full">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-white font-bold">{selectedJob.title}</h3>
+                <p className="text-blue-200 text-sm">{selectedJob.company} · {selectedJob.location}</p>
               </div>
+              <button onClick={() => setShowApplyModal(false)} className="text-white/40 hover:text-white"><X className="w-5 h-5" /></button>
             </div>
-
-            <div className="space-y-3 mb-6">
-              <p className="text-white/80 text-sm">Choose how you'd like to apply:</p>
-              
-              <button
-                onClick={() => handleApplyConfirm('form')}
-                className="w-full p-3 bg-green-600/20 border border-green-500/50 rounded-lg text-green-200 hover:bg-green-600/30 transition-all flex items-center gap-3"
-              >
-                <Briefcase className="w-4 h-4" />
-                <div className="text-left">
-                  <div className="font-medium">Apply with Form</div>
-                  <div className="text-xs text-green-300/80">Fill out application form with resume upload</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleApplyConfirm('direct')}
-                className="w-full p-3 bg-blue-600/20 border border-blue-500/50 rounded-lg text-blue-200 hover:bg-blue-600/30 transition-all flex items-center gap-3"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <div className="text-left">
-                  <div className="font-medium">Apply Directly</div>
-                  <div className="text-xs text-blue-300/80">Visit company website</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleApplyConfirm('linkedin')}
-                className="w-full p-3 bg-blue-600/20 border border-blue-500/50 rounded-lg text-blue-200 hover:bg-blue-600/30 transition-all flex items-center gap-3"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <div className="text-left">
-                  <div className="font-medium">Apply via LinkedIn</div>
-                  <div className="text-xs text-blue-300/80">Search on LinkedIn Jobs</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleApplyConfirm('indeed')}
-                className="w-full p-3 bg-purple-600/20 border border-purple-500/50 rounded-lg text-purple-200 hover:bg-purple-600/30 transition-all flex items-center gap-3"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <div className="text-left">
-                  <div className="font-medium">Apply via Indeed</div>
-                  <div className="text-xs text-purple-300/80">Search on Indeed</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleApplyConfirm('save')}
-                className="w-full p-3 bg-yellow-600/20 border border-yellow-500/50 rounded-lg text-yellow-200 hover:bg-yellow-600/30 transition-all flex items-center gap-3"
-              >
-                <Bookmark className="w-4 h-4" />
-                <div className="text-left">
-                  <div className="font-medium">Save for Later</div>
-                  <div className="text-xs text-yellow-300/80">Add to bookmarks</div>
-                </div>
-              </button>
+            <div className="space-y-2">
+              {[
+                { method: 'form',     label: 'Apply with Form',    sub: 'Upload resume & fill form',    cls: 'border-green-500/40 text-green-200 hover:bg-green-600/20' },
+                { method: 'direct',   label: 'Apply Directly',     sub: 'Visit company website',        cls: 'border-blue-500/40 text-blue-200 hover:bg-blue-600/20' },
+                { method: 'linkedin', label: 'Apply via LinkedIn',  sub: 'Search on LinkedIn Jobs',      cls: 'border-blue-500/40 text-blue-200 hover:bg-blue-600/20' },
+                { method: 'indeed',   label: 'Apply via Indeed',    sub: 'Search on Indeed',             cls: 'border-purple-500/40 text-purple-200 hover:bg-purple-600/20' },
+              ].map(({ method, label, sub, cls }) => (
+                <button key={method} onClick={() => handleApplyConfirm(method)}
+                  className={`w-full p-3 bg-white/5 border rounded-lg text-left transition-all ${cls}`}>
+                  <p className="font-medium text-sm">{label}</p>
+                  <p className="text-xs opacity-70">{sub}</p>
+                </button>
+              ))}
             </div>
-
-            <button
-              onClick={() => setShowApplyModal(false)}
-              className="w-full py-2 px-4 bg-white/10 border border-white/20 text-white rounded-lg font-medium text-sm hover:bg-white/20 transition-all"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
 
-      {/* Job Application Form */}
       {showApplicationForm && selectedJob && (
         <JobApplicationForm
           job={selectedJob}
-          onClose={() => {
-            setShowApplicationForm(false);
-            setSelectedJob(null);
-          }}
-          onSuccess={handleApplicationSuccess}
+          onClose={() => { setShowApplicationForm(false); setSelectedJob(null); }}
+          onSuccess={() => setAppliedJobs(prev => new Set([...prev, selectedJob.id]))}
         />
       )}
     </div>
